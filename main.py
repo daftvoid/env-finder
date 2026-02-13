@@ -13,10 +13,21 @@ import time
 from colorama import Fore
 from colorama import Back
 
-def log(message:str, level:str=f"{Back.LIGHTCYAN_EX}{Fore.BLACK}INFO{Back.RESET}{Fore.RESET}", end="\n"):
-    print(f"{Fore.WHITE}[{datetime.now().strftime("%H:%M:%S")}]{Fore.RESET} {level.ljust(15)} {message}", end=end)
+def log(message:str, level:str=f"info", end="\n"):
 
-query = "stars:<2 created:2026-02-13T11:20:00Z..2026-02-13T11:25:00Z"
+    levelcolor = ""
+
+    if level.lower() == "info":
+        levelcolor = f"{Back.LIGHTCYAN_EX}{Fore.BLACK}"
+    if level.lower() == "error":
+        levelcolor = f"{Back.RED}{Fore.BLACK}"
+    if level.lower() == "results":
+        levelcolor = f"{Back.YELLOW}{Fore.BLACK}"
+
+
+    print(f"{Fore.WHITE}[{datetime.now().strftime("%H:%M:%S")}]{Fore.RESET} {levelcolor} {level.upper().ljust(10)}{Fore.RESET}{Back.RESET} {message}", end=end)
+
+query = "stars:<2 created:2026-02-13T11:40:00Z..2026-02-13T11:45:00Z"
 
 size = 15
 
@@ -52,7 +63,7 @@ for p in range(1, ceil(count/size) + 1):
             try:
                 files = get_files(name)
             except:
-                log("Failed to fetch Files",f"{Back.RED}{Fore.BLACK}ERROR{Back.RESET}{Fore.RESET}", end="")
+                log("Failed to fetch Files","error")
                 time.sleep(5)
                 continue
 
@@ -73,7 +84,7 @@ for p in range(1, ceil(count/size) + 1):
             continue
 
         with open("secrets.csv", "a") as f:
-            log(f"Found Secrets for {name}", f"{Back.MAGENTA}{Fore.BLACK}SECRETS{Back.RESET}{Fore.RESET}")
+            log(f"Found Secrets for {name}", "results")
 
             for sec in secrets:
                 path = sec["path"]
