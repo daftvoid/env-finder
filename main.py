@@ -1,7 +1,3 @@
-from datetime import datetime
-import os
-from re import search
-
 from dotenv import load_dotenv
 
 from github import get_files, search_repos
@@ -10,24 +6,9 @@ load_dotenv()
 
 from math import ceil
 import time
-from colorama import Fore
-from colorama import Back
+from util import log
 
-def log(message:str, level:str=f"info", end="\n"):
-
-    levelcolor = ""
-
-    if level.lower() == "info":
-        levelcolor = f"{Back.LIGHTCYAN_EX}{Fore.BLACK}"
-    if level.lower() == "error":
-        levelcolor = f"{Back.RED}{Fore.BLACK}"
-    if level.lower() == "results":
-        levelcolor = f"{Back.YELLOW}{Fore.BLACK}"
-
-
-    print(f"{Fore.WHITE}[{datetime.now().strftime("%H:%M:%S")}]{Fore.RESET} {levelcolor} {level.upper().ljust(10)}{Fore.RESET}{Back.RESET} {message}", end=end)
-
-query = "stars:<2 created:2026-02-13T11:40:00Z..2026-02-13T11:45:00Z"
+query = "stars:<2 created:2026-02-13T12:40:00Z..2026-02-13T12:45:00Z"
 
 size = 15
 
