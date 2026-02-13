@@ -27,5 +27,6 @@ def get_files(repo_name):
 
     return tree_res.json()["tree"]
 
+
 if __name__ == '__main__':
-    print(get_repo("daftvoid/env-finder"))
+    print(get_files("thoeurnphen/POS_SYSTEM"))

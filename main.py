@@ -16,7 +16,7 @@ from colorama import Back
 def log(message:str, level:str=f"{Back.LIGHTCYAN_EX}{Fore.BLACK}INFO{Back.RESET}{Fore.RESET}", end="\n"):
     print(f"{Fore.WHITE}[{datetime.now().strftime("%H:%M:%S")}]{Fore.RESET} {level.ljust(15)} {message}", end=end)
 
-query = "stars:<2 created:2026-02-12T11:00:00Z..2026-02-12T11:10:00Z"
+query = "stars:<2 created:2026-02-12T11:20:00Z..2026-02-12T11:25:00Z"
 
 size = 15
 
@@ -44,13 +44,15 @@ for p in range(1, ceil(count/size) + 1):
 
         searched.append(name)
 
-        log(f"Scraping {name}...  ".ljust(50), end="")
 
         tmp = True
         while tmp:
+            log(f"Scraping {name}...  ".ljust(70), end="")
+
             try:
                 files = get_files(name)
             except:
+                print("\n")
                 log("Failed to fetch Files",f"{Back.RED}{Fore.BLACK}ERROR{Back.RESET}{Fore.RESET}", end="")
                 time.sleep(5)
                 continue
@@ -62,7 +64,7 @@ for p in range(1, ceil(count/size) + 1):
         for file in files:
             path: str = file["path"]
 
-            if path.endswith(".env"):
+            if ".env" in path and not "example" in path:
                 secrets.append(path)
 
         if len(secrets) == 0:
