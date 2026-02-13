@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from re import search
 
@@ -9,21 +10,23 @@ load_dotenv()
 
 from math import ceil
 import time
-import requests
-import json
+from colorama import Fore
+from colorama import Back
 
+def log(message:str, level:str=f"{Back.LIGHTCYAN_EX}{Fore.BLACK}INFO{Back.RESET}{Fore.RESET}", end="\n"):
+    print(f"{Fore.WHITE}[{datetime.now().strftime("%H:%M:%S")}]{Fore.RESET} {level.ljust(15)} {message}", end=end)
 
-query = "stars:<2 created:2026-02-12T10:00:00Z..2026-02-12T10:10:00Z"
+query = "stars:<2 created:2026-02-12T11:00:00Z..2026-02-12T11:10:00Z"
 
 size = 15
 
 count = search_repos(query)["total_count"]
-print(f"Found {count} results...")
+log(f"Found {count} results...")
 
 searched = []
 
 for p in range(1, ceil(count/size) + 1):
-    print(f"Loading Page {p}")
+    log(f"Loading Page {p}")
     page = search_repos(query, p, size)
 
 
@@ -36,19 +39,19 @@ for p in range(1, ceil(count/size) + 1):
         language = repo.get("language")
 
         if name in searched:
-            print("Already searched")
+            log("Already searched")
             continue
 
         searched.append(name)
 
-        print(f"Scraping {name}...  ", end="")
+        log(f"Scraping {name}...  ".ljust(50), end="")
 
         tmp = True
         while tmp:
             try:
                 files = get_files(name)
             except:
-                print("failed", end="")
+                log("Failed to fetch Files",f"{Back.RED}{Fore.BLACK}ERROR{Back.RESET}{Fore.RESET}", end="")
                 time.sleep(5)
                 continue
 
@@ -68,6 +71,8 @@ for p in range(1, ceil(count/size) + 1):
 
         with open("secrets.csv", "a") as f:
             print(secrets)
+
+            log(f"Found Secrets for {name}", f"{Back.MAGENTA}{Fore.BLACK}SECRETS{Back.RESET}{Fore.RESET}")
 
             for sec in secrets:
                 f.write(f"{name},{branch},{language},https://github.com/{name}/blob/{branch}/{sec}\n")
