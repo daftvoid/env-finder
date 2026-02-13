@@ -16,7 +16,7 @@ from colorama import Back
 def log(message:str, level:str=f"{Back.LIGHTCYAN_EX}{Fore.BLACK}INFO{Back.RESET}{Fore.RESET}", end="\n"):
     print(f"{Fore.WHITE}[{datetime.now().strftime("%H:%M:%S")}]{Fore.RESET} {level.ljust(15)} {message}", end=end)
 
-query = "stars:<2 created:2026-02-12T11:20:00Z..2026-02-12T11:25:00Z"
+query = "stars:<2 created:2026-02-13T11:20:00Z..2026-02-13T11:25:00Z"
 
 size = 15
 
@@ -47,12 +47,11 @@ for p in range(1, ceil(count/size) + 1):
 
         tmp = True
         while tmp:
-            log(f"Scraping {name}...  ".ljust(70), end="")
+            log(f"Scraping {name}...  ".ljust(70))
 
             try:
                 files = get_files(name)
             except:
-                print("\n")
                 log("Failed to fetch Files",f"{Back.RED}{Fore.BLACK}ERROR{Back.RESET}{Fore.RESET}", end="")
                 time.sleep(5)
                 continue
@@ -64,17 +63,18 @@ for p in range(1, ceil(count/size) + 1):
         for file in files:
             path: str = file["path"]
 
+            if file["type"] == "tree": continue
+            if file.get("size", 0) == 0: continue
+
             if ".env" in path and not "example" in path:
-                secrets.append(path)
+                secrets.append(file)
 
         if len(secrets) == 0:
-            print([])
             continue
 
         with open("secrets.csv", "a") as f:
-            print(secrets)
-
             log(f"Found Secrets for {name}", f"{Back.MAGENTA}{Fore.BLACK}SECRETS{Back.RESET}{Fore.RESET}")
 
             for sec in secrets:
-                f.write(f"{name},{branch},{language},https://github.com/{name}/blob/{branch}/{sec}\n")
+                path = sec["path"]
+                f.write(f"{name},{branch},{language},https://github.com/{name}/blob/{branch}/{path},{sec["sha"]}\n")
