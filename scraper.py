@@ -10,7 +10,7 @@ from math import ceil
 import time
 from util import log
 
-size = 15
+size = 100
 
 seen = set()
 
@@ -23,10 +23,10 @@ errors = 0
 while True:
     basetime = datetime.now(timezone.utc)
 
-    now = basetime - timedelta(seconds=30)
-    before = now - timedelta(seconds=59)
+    now = basetime - timedelta(seconds=90)
+    before = now - timedelta(minutes=5)
 
-    query = f"stars:<2 language:Python language:JavaScript language:TypeScript created:{before.strftime("%Y-%m-%dT%H:%M:%SZ")}..{now.strftime("%Y-%m-%dT%H:%M:%SZ")}"
+    query = f"stars:<2 created:{before.strftime("%Y-%m-%dT%H:%M:%SZ")}..{now.strftime("%Y-%m-%dT%H:%M:%SZ")}"
 
     log(f"Querying \"{query}\"")
 
@@ -37,10 +37,15 @@ while True:
         log(f"Loading Page {p}/{ceil(count/size)}")
         page = search_repos(query, p, size)
 
+        filtered_items = [
+            repo for repo in page["items"]
+            if repo["language"] is not None
+        ]
 
+        if len(filtered_items) != len(page["items"]):
+            log(f"Filtered {len(page["items"]) - len(filtered_items)} Repos without language")
 
-        for repo in page["items"]:
-            time.sleep(1)
+        for repo in filtered_items:
 
             name = repo["full_name"]
             branch = repo.get("default_branch", "main")
@@ -51,7 +56,7 @@ while True:
                 continue
 
             seen.add(name)
-
+            time.sleep(1)
 
             tmp = True
             while tmp:
