@@ -12,7 +12,7 @@ from util import log
 
 size = 15
 
-searched = []
+seen = set()
 
 # stats
 repos_scraped = 0
@@ -46,11 +46,11 @@ while True:
             branch = repo.get("default_branch", "main")
             language = repo.get("language")
 
-            if name in searched:
+            if name in seen:
                 log("Already searched")
                 continue
 
-            searched.append(name)
+            seen.add(name)
 
 
             tmp = True
