@@ -8,7 +8,7 @@ from math import ceil
 import time
 from util import log
 
-query = "stars:<2 created:2026-02-13T12:40:00Z..2026-02-13T12:45:00Z"
+query = "stars:<2 language:Python language:JavaScript language:TypeScript created:2026-02-14T16:50:00Z..2026-02-14T17:00:00Z"
 
 size = 15
 
@@ -18,7 +18,7 @@ log(f"Found {count} results...")
 searched = []
 
 for p in range(1, ceil(count/size) + 1):
-    log(f"Loading Page {p}")
+    log(f"Loading Page {p}/{ceil(count/size) + 1}")
     page = search_repos(query, p, size)
 
 
