@@ -14,6 +14,12 @@ size = 15
 
 searched = []
 
+# stats
+repos_scraped = 0
+secrets_found = 0
+errors = 0
+
+
 while True:
     now = datetime.now(timezone.utc) - timedelta(minutes=1)
     before = datetime.now(timezone.utc) - timedelta(minutes=2)
@@ -53,6 +59,7 @@ while True:
                     files = get_files(name)
                 except:
                     log("Failed to fetch Files","error")
+                    errors += 1
                     time.sleep(5)
                     continue
 
@@ -72,9 +79,16 @@ while True:
             if len(secrets) == 0:
                 continue
 
+            secrets_found += len(secrets)
+
             with open("secrets.csv", "a") as f:
                 log(f"Found Secrets for {name}", "results")
 
                 for sec in secrets:
                     path = sec["path"]
                     f.write(f"{name},{branch},{language},https://github.com/{name}/blob/{branch}/{path},{sec["sha"]}\n")
+
+
+        repos_scraped += 1
+
+    log(f"Repos scraped: {repos_scraped} - Secrets: {secrets_found} - Errors: {errors}", "stats")
