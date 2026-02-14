@@ -21,8 +21,10 @@ errors = 0
 
 
 while True:
-    now = datetime.now(timezone.utc) - timedelta(minutes=1)
-    before = datetime.now(timezone.utc) - timedelta(minutes=2)
+    basetime = datetime.now(timezone.utc)
+
+    now = basetime - timedelta(seconds=30)
+    before = now - timedelta(seconds=59)
 
     query = f"stars:<2 language:Python language:JavaScript language:TypeScript created:{before.strftime("%Y-%m-%dT%H:%M:%SZ")}..{now.strftime("%Y-%m-%dT%H:%M:%SZ")}"
 
@@ -76,6 +78,8 @@ while True:
                 if ".env" in path and not "example" in path:
                     secrets.append(file)
 
+            repos_scraped += 1
+
             if len(secrets) == 0:
                 continue
 
@@ -89,6 +93,4 @@ while True:
                     f.write(f"{name},{branch},{language},https://github.com/{name}/blob/{branch}/{path},{sec["sha"]}\n")
 
 
-        repos_scraped += 1
-
-    log(f"Repos scraped: {repos_scraped} - Secrets: {secrets_found} - Errors: {errors}", "stats")
+    log(f"Repos scraped: {repos_scraped} - Secrets: {secrets_found} - Errors: {errors} - ", "stats")
