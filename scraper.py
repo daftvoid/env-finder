@@ -2,7 +2,8 @@ from datetime import datetime, timezone, timedelta
 
 from dotenv import load_dotenv
 
-from github import get_files, search_repos
+from analysis import analyze_env_file
+from github import get_files, search_repos, get_file_content
 
 load_dotenv()
 
@@ -87,12 +88,28 @@ while True:
 
             secrets_found += len(secrets)
 
-            with open("secrets.csv", "a") as f:
+            with open("hits.csv", "a") as f:
                 log(f"Found Secrets for {name}", "results")
 
                 for sec in secrets:
                     path = sec["path"]
+
                     f.write(f"{name},{branch},{language},https://github.com/{name}/blob/{branch}/{path},{sec["sha"]}\n")
+
+            with open("secrets.csv", "a") as f:
+                for sec in secrets:
+                    path = sec["path"]
+
+                    env_vars = analyze_env_file(get_file_content(name, branch, path))
+
+                    for var in env_vars:
+                        key = var.get("key")
+                        val = var.get("value")
+                        sev = var.get("severity")
+
+                        if sev == "noise": continue
+
+                        f.write(f"{name},{sev},{key},{val},https://github.com/{name}/blob/{branch}/{path}\n")
 
 
     log(f"Repos scraped: {repos_scraped} - Secrets: {secrets_found} - Errors: {errors} - ", "stats")
