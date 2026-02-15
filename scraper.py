@@ -23,10 +23,14 @@ errors = 0
 while True:
     basetime = datetime.now(timezone.utc)
 
-    now = basetime - timedelta(seconds=90)
-    before = now - timedelta(minutes=5)
+    now = basetime - timedelta(minutes=1)
+    before = now - timedelta(minutes=1)
 
-    query = f"stars:<2 created:{before.strftime("%Y-%m-%dT%H:%M:%SZ")}..{now.strftime("%Y-%m-%dT%H:%M:%SZ")}"
+    query = (f"stars:<5 "
+             f"language:JavaScript "
+             f"language:TypeScript "
+             f"language:Python "
+             f" created:{before.strftime("%Y-%m-%dT%H:%M:%SZ")}..{now.strftime("%Y-%m-%dT%H:%M:%SZ")}")
 
     log(f"Querying \"{query}\"")
 
@@ -37,15 +41,7 @@ while True:
         log(f"Loading Page {p}/{ceil(count/size)}")
         page = search_repos(query, p, size)
 
-        filtered_items = [
-            repo for repo in page["items"]
-            if repo["language"] is not None
-        ]
-
-        if len(filtered_items) != len(page["items"]):
-            log(f"Filtered {len(page["items"]) - len(filtered_items)} Repos without language")
-
-        for repo in filtered_items:
+        for repo in page["items"]:
 
             name = repo["full_name"]
             branch = repo.get("default_branch", "main")
@@ -53,10 +49,11 @@ while True:
 
             if name in seen:
                 log("Already searched")
+                time.sleep(0.3)
                 continue
 
             seen.add(name)
-            time.sleep(1)
+            time.sleep(0.5)
 
             tmp = True
             while tmp:
