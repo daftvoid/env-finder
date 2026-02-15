@@ -2,13 +2,13 @@ import re
 
 critical_patterns = [
     re.compile(r".*API_KEY$", re.IGNORECASE),
-    re.compile(r".*SECRET$", re.IGNORECASE),
+    re.compile(r".*SECRET.*", re.IGNORECASE),
     re.compile(r".*TOKEN$", re.IGNORECASE),
     re.compile(r".*PASS$", re.IGNORECASE),
     re.compile(r".*PASSWORD$", re.IGNORECASE),
     re.compile(r".*WEBHOOK.*", re.IGNORECASE),
     re.compile(r"PRIVATE_KEY", re.IGNORECASE),
-    re.compile(r"MONGO_URI", re.IGNORECASE),
+    re.compile(r"MONGO.*_URI", re.IGNORECASE),
 ]
 
 sensitive_patterns = [
@@ -45,7 +45,9 @@ def analyze_env_file(content: str):
     result = []
 
     for line in content.split("\n"):
-        if len(line.strip()) == 0: continue
+        line = line.strip()
+
+        if not len(line): continue
 
         if line.startswith("#"): continue
         if "=" not in line: continue
@@ -54,6 +56,8 @@ def analyze_env_file(content: str):
 
         key = key.strip().upper()
         value = value.strip()
+
+        if not value: continue
 
         result.append({
             "severity": classify_env_key(key),
