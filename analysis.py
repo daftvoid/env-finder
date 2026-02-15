@@ -1,16 +1,32 @@
-critical_env_vars = [
-    "SMTP_PASS",
-    "GEMINI_API_KEY"
+import re
+
+critical_patterns = [
+    re.compile(r".*API_KEY$", re.IGNORECASE)
 ]
 
-sensitive_env_vars = [
-    "SMTP_USER"
+sensitive_patterns = [
+    re.compile(r"SMTP_USER", re.IGNORECASE),
+    re.compile(r"DB_HOST", re.IGNORECASE),
 ]
 
-noise_env_vars = [
-    "VITE_SUPABASE_PROJECT_ID",
-    "NODE_ENV"
+noise_patterns = [
+    re.compile(r"^VITE.*", re.IGNORECASE)
 ]
+
+def classify_env_key(key: str):
+    key = key.strip().upper()
+
+    for pattern in critical_patterns:
+        if pattern.match(key):
+            return "critical"
+    for pattern in sensitive_patterns:
+        if pattern.match(key):
+            return "sensitive"
+    for pattern in noise_patterns:
+        if pattern.match(key):
+            return "noise"
+
+    return "unknown"
 
 def analyze_env_file(content: str):
     result = []
@@ -21,22 +37,13 @@ def analyze_env_file(content: str):
         if line.startswith("#"): continue
         if "=" not in line: continue
 
-
         key, value = line.split("=", 1)
 
         key = key.strip().upper()
         value = value.strip()
-        severity = "unknown"
-
-        if key in critical_env_vars:
-            severity = "critical"
-        elif key in sensitive_env_vars:
-            severity = "sensitive"
-        elif key in noise_env_vars:
-            severity = "noise"
 
         result.append({
-            "severity": severity,
+            "severity": classify_env_key(key),
             "key": key,
             "value": value
         })
