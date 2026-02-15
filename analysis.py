@@ -41,4 +41,5 @@ def analyze_env_file(content: str):
             "value": value
         })
 
+    return result
 
