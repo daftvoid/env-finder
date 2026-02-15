@@ -28,7 +28,7 @@ def get_files(repo_name):
     return tree_res.json()["tree"]
 
 def get_file_content(repo, branch, filepath):
-    res = requests.get(f"raw.githubusercontent.com/{repo}/refs/heads/{branch}/{filepath}")
+    res = requests.get(f"https://raw.githubusercontent.com/{repo}/refs/heads/{branch}/{filepath}")
 
     return res.text
 
