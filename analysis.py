@@ -1,16 +1,29 @@
 import re
 
 critical_patterns = [
-    re.compile(r".*API_KEY$", re.IGNORECASE)
+    re.compile(r".*API_KEY$", re.IGNORECASE),
+    re.compile(r".*SECRET$", re.IGNORECASE),
+    re.compile(r".*TOKEN$", re.IGNORECASE),
+    re.compile(r".*PASS$", re.IGNORECASE),
+    re.compile(r".*PASSWORD$", re.IGNORECASE),
+    re.compile(r".*WEBHOOK.*", re.IGNORECASE),
+    re.compile(r"PRIVATE_KEY", re.IGNORECASE),
+    re.compile(r"MONGO_URI", re.IGNORECASE),
 ]
 
 sensitive_patterns = [
     re.compile(r"SMTP_USER", re.IGNORECASE),
-    re.compile(r"DB_HOST", re.IGNORECASE),
+    re.compile(r"MAIL_USER", re.IGNORECASE),
+    re.compile(r".*MAIL$", re.IGNORECASE),
+    re.compile(r".*CHAT_ID$", re.IGNORECASE),
 ]
 
 noise_patterns = [
-    re.compile(r"^VITE.*", re.IGNORECASE)
+    re.compile(r"^VITE.*", re.IGNORECASE),
+    re.compile(r"^NODE.*", re.IGNORECASE),
+    re.compile(r".*PORT$", re.IGNORECASE),
+    re.compile(r".*HOST$", re.IGNORECASE),
+    re.compile(r"EXPORT NODE_BINARY", re.IGNORECASE)
 ]
 
 def classify_env_key(key: str):
