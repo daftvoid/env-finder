@@ -23,7 +23,7 @@ noise_patterns = [
     re.compile(r"^NODE.*", re.IGNORECASE),
     re.compile(r".*PORT$", re.IGNORECASE),
     re.compile(r".*HOST$", re.IGNORECASE),
-    re.compile(r"EXPORT NODE_BINARY", re.IGNORECASE)
+    re.compile(r" *", re.IGNORECASE)
 ]
 
 def classify_env_key(key: str):
