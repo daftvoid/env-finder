@@ -35,7 +35,12 @@ while True:
 
     log(f"Querying \"{query}\"")
 
-    count = search_repos(query)["total_count"]
+    try:
+        count = search_repos(query)["total_count"]
+    except:
+        log("Error while searching for repos", "error")
+        count = 0
+
     log(f"Found {count} matching repositories...")
 
     for p in range(1, ceil(count/size) + 1):
