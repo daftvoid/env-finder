@@ -56,6 +56,8 @@ while True:
             seen.add(name)
             time.sleep(0.5)
 
+            files = []
+
             tmp = True
             while tmp:
                 log(f"Scraping {name}...  ".ljust(70))
