@@ -6,96 +6,108 @@ from github import get_files, search_repos
 from util import log, LogLevel, add_hits_entry, add_secrets_entry
 
 
-size = 100
-
-seen = set()
-
-# stats
-repos_scraped = 0
-secrets_found = 0
-errors = 0
+REPO_BATCH_SIZE = 100
 
 
-while True:
-    now = datetime.now(timezone.utc)
+class Scraper:
+    def __init__(self):
+        self.repos_scraped = 0
+        self.secrets_count = 0
+        self.errors_count = 0
+        self.running = False
 
-    to = now - timedelta(minutes=1)
-    from_ = to - timedelta(minutes=1)
-
-    query = (f"stars:<5 "
-             f"language:JavaScript "
-             f"language:TypeScript "
-             f"language:Python "
-             f" created:{from_.strftime("%Y-%m-%dT%H:%M:%SZ")}..{to.strftime("%Y-%m-%dT%H:%M:%SZ")}")
-
-    log(f"[GITHUB] Querying '{query}'")
+        self.seen_repos = set()
 
 
 
-    repos = search_repos(query, per_page=1)  # only 1, because we dont care about the actual repos just yet
-    if not repos:
-        log("Error while searching for repos", LogLevel.ERROR)
-        log(f"Repos scraped: {repos_scraped} - Secrets: {secrets_found} - Errors: {errors} - ", LogLevel.STATS)
-        break
 
-    count = repos["total_count"]
+    def start(self):
+        while True:
+            now = datetime.now(timezone.utc)
 
-    log(f"[GITHUB] Found {count} matching repositories...")
+            to = now - timedelta(minutes=1)
+            from_ = to - timedelta(minutes=1)
 
-    # Split into chunks of 100 results each, because the Github API only allows up to 100 results per request
-    for p in range(1, ceil(count/size) + 1):
-        log(f"[GITHUB] Loading Page {p}/{ceil(count/size)}")
-        repos = search_repos(query, p, size)["items"]
+            query = (f"stars:<5 "
+                     f"language:JavaScript "
+                     f"language:TypeScript "
+                     f"language:Python "
+                     f" created:{from_.strftime("%Y-%m-%dT%H:%M:%SZ")}..{to.strftime("%Y-%m-%dT%H:%M:%SZ")}")
 
-        for repo in repos:
-            name = repo["full_name"]
-            branch = repo.get("default_branch", "main")
-            language = repo.get("language")
-
-            if name in seen:
-                log(f"[{name}] [~] Repo was already searched, skipping")
-                time.sleep(0.3)
-                continue
-
-            seen.add(name)
-            time.sleep(0.5)
+            log(f"[GITHUB] Querying '{query}'")
 
 
-            log(f"[{name}] [~] Scraping ...  ".ljust(70))
 
-            files = get_files(name)
-            if not files:
-                log(f"[{name}] [-] Failed to fetch Files", LogLevel.ERROR)
-                errors += 1
-                time.sleep(5)
-                continue
+            repos = search_repos(query, per_page=1)  # only 1, because we don't care about the actual repos just yet
+            if not repos:
+                log("Error while searching for repos", LogLevel.ERROR)
+                log(f"Repos scraped: {self.repos_scraped} - Secrets: {self.secrets_count} - Errors: {self.errors_count} ", LogLevel.STATS)
+                break
+
+            count = repos["total_count"]
+
+            log(f"[GITHUB] Found {count} matching repositories...")
+
+            # Split into chunks of 100 results each, because the Github API only allows up to 100 results per request
+            for p in range(1, ceil(count/REPO_BATCH_SIZE) + 1):
+                if not self.running:
+                    break
+
+                log(f"[GITHUB] Loading Page {p}/{ceil(count/REPO_BATCH_SIZE)}")
+                repos = search_repos(query, p, REPO_BATCH_SIZE)["items"]
+
+                for repo in repos:
+                    if not self.running:
+                        break
+
+                    name = repo["full_name"]
+                    branch = repo.get("default_branch", "main")
+                    language = repo.get("language")
+
+                    if name in self.seen_repos:
+                        log(f"[{name}] [~] Repo was already searched, skipping")
+                        time.sleep(0.3)
+                        continue
+
+                    self.seen_repos.add(name)
+                    time.sleep(0.5)
 
 
-            secrets = []
+                    log(f"[{name}] [~] Scraping ...  ".ljust(70))
 
-            for file in files:
-                path = file["path"]
-
-                if file["type"] == "tree": continue
-                if not file.get("size"): continue
-
-                if ".env" in path and not "example" in path:
-                    secrets.append(file)
+                    files = get_files(name)
+                    if not files:
+                        log(f"[{name}] [-] Failed to fetch Files", LogLevel.ERROR)
+                        self.errors_count += 1
+                        time.sleep(5)
+                        continue
 
 
-            repos_scraped += 1
-            secrets_found += len(secrets)
+                    secrets = []
 
-            if not secrets:
-                log(f"[{name}] [-] No secrets found")
-                continue
+                    for file in files:
+                        path = file["path"]
+
+                        if file["type"] == "tree": continue
+                        if not file.get("size"): continue
+
+                        if ".env" in path and not "example" in path:
+                            secrets.append(file)
 
 
-            add_hits_entry(repo_name=name, branch=branch, language=language, secrets=secrets)
-            add_secrets_entry(repo_name=name, branch=branch, secrets=secrets)
+                    self.repos_scraped += 1
+                    self.secrets_count += len(secrets)
+
+                    if not secrets:
+                        log(f"[{name}] [-] No secrets found")
+                        continue
 
 
-    log(f"Repos scraped: {repos_scraped} - Secrets: {secrets_found} - Errors: {errors} - ", LogLevel.STATS)
+                    add_hits_entry(repo_name=name, branch=branch, language=language, secrets=secrets)
+                    add_secrets_entry(repo_name=name, branch=branch, secrets=secrets)
+
+
+            log(f"Repos scraped: {self.repos_scraped} - Secrets: {self.secrets_count} - Errors: {self.errors_count} - ", LogLevel.STATS)
 
 
 
