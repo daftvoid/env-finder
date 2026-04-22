@@ -8,11 +8,9 @@ GITHUB_PAT = os.getenv("GITHUB_PAT")
 if not GITHUB_PAT:
     raise ValueError("'GITHUB_PAT' is not set.")
 
-
 HEADERS = {"Authorization": f"token {GITHUB_PAT}"}
 
-# TODO: handle unsuccessful responses everywhere
-# TODO: Type Hint
+
 def search_repos(query: str, page: int = 1, per_page: int = 100):
     url = f"https://api.github.com/search/repositories?q={query}&page={page}&per_page={per_page}"
     resp = requests.get(url, headers=HEADERS)
@@ -46,6 +44,3 @@ def get_file_content(repo_name: str, branch: str, filepath: str) -> str:
     return resp.text
 
 
-
-if __name__ == '__main__':
-    print(get_files("thoeurnphen/POS_SYSTEM"))
