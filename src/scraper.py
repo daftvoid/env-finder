@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from math import ceil
 import time
+import signal
 
 from github import get_files, search_repos
 from util import log, LogLevel, add_hits_entry, add_secrets_entry
@@ -18,11 +19,18 @@ class Scraper:
 
         self.seen_repos = set()
 
+        signal.signal(signal.SIGTERM, self.handle_stop_signals)
+        signal.signal(signal.SIGINT, self.handle_stop_signals)
 
+
+    def handle_stop_signals(self, *_):
+        self.running = False
+        log("Received shutdown signal, shutting down...", LogLevel.INFO)
 
 
     def start(self):
-        while True:
+        self.running = True
+        while self.running:
             now = datetime.now(timezone.utc)
 
             to = now - timedelta(minutes=1)
