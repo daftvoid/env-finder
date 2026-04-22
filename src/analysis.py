@@ -3,9 +3,7 @@ from enum import StrEnum
 
 
 critical_patterns = [
-    re.compile(r"API_KEY$", re.IGNORECASE),
-    re.compile(r"SECRET", re.IGNORECASE),
-    re.compile(r"TOKEN$", re.IGNORECASE),
+    re.compile(r"(API|KEY|SECRET|TOKEN)", re.IGNORECASE),
     re.compile(r"PASS(WORD)?$", re.IGNORECASE),
     re.compile(r"WEBHOOK", re.IGNORECASE),
     re.compile(r"PRIVATE_KEY", re.IGNORECASE),
