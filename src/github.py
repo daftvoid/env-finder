@@ -48,5 +48,3 @@ def get_file_content(repo_name: str, branch: str, filepath: str) -> str:
 
 
 
-if __name__ == '__main__':
-    print(get_files("thoeurnphen/POS_SYSTEM"))

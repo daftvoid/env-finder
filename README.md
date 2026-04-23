@@ -4,6 +4,20 @@ EnvFinder is a security research tool that helps identify accidentally exposed c
 files (.env files) in public github repositories to support responsible disclosure and defensive
 analysis.
 
+---
+
+## Todo
+
+- [ ] Replace logging System with stdlib logging module
+- [ ] Improve Log Messages
+- [ ] Implement logic to filter out known default .env files using hash blacklist
+- [ ] Add more hashes for default .env files
+- [ ] Add type hints in github.py
+- [ ] Handle unsuccessful responses in github.py
+
+
+---
+
 ## Responsible Use
 
 This tool is intended for ethical security research and defensive analysis only.

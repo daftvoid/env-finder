@@ -6,14 +6,17 @@ from github import get_files, search_repos
 from util import log, LogLevel, add_hits_entry, add_secrets_entry
 
 
-size = 100
+class Scraper:
+    def __init__(self):
+        self.repos_scraped = 0
+        self.secrets_count = 0
+        self.errors_count = 0
+        self.running = False
 
-seen = set()
+        self.seen_repos = set()
 
-# stats
-repos_scraped = 0
-secrets_found = 0
-errors = 0
+        signal.signal(signal.SIGTERM, self.handle_stop_signals)
+        signal.signal(signal.SIGINT, self.handle_stop_signals)
 
 
 while True:
@@ -57,8 +60,7 @@ while True:
                 time.sleep(0.3)
                 continue
 
-            seen.add(name)
-            time.sleep(0.5)
+            log(f"[GITHUB] Found {count} matching repositories...")
 
 
             log(f"[{name}] [~] Scraping ...  ".ljust(70))
@@ -71,7 +73,18 @@ while True:
                 continue
 
 
-            secrets = []
+                    self.seen_repos.add(name)
+                    time.sleep(0.5)
+
+
+                    log(f"[{name}] [~] Scraping ...  ".ljust(70))
+
+                    files = get_files(name)
+                    if not files:
+                        log(f"[{name}] [-] Failed to fetch Files", LogLevel.ERROR)
+                        self.errors_count += 1
+                        time.sleep(5)
+                        continue
 
             for file in files:
                 path = file["path"]
@@ -79,8 +92,8 @@ while True:
                 if file["type"] == "tree": continue
                 if not file.get("size"): continue
 
-                if ".env" in path and not "example" in path:
-                    secrets.append(file)
+                    for file in files:
+                        path = file["path"]
 
 
             repos_scraped += 1

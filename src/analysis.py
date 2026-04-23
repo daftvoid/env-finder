@@ -2,21 +2,17 @@ import re
 from enum import StrEnum
 
 critical_patterns = [
-    re.compile(r".*API_KEY$", re.IGNORECASE),
-    re.compile(r".*SECRET.*", re.IGNORECASE),
-    re.compile(r".*TOKEN$", re.IGNORECASE),
-    re.compile(r".*PASS$", re.IGNORECASE),
-    re.compile(r".*PASSWORD$", re.IGNORECASE),
-    re.compile(r".*WEBHOOK.*", re.IGNORECASE),
+    re.compile(r"(API|KEY|SECRET|TOKEN)", re.IGNORECASE),
+    re.compile(r"PASS(WORD)?$", re.IGNORECASE),
+    re.compile(r"WEBHOOK", re.IGNORECASE),
     re.compile(r"PRIVATE_KEY", re.IGNORECASE),
     re.compile(r"MONGO.*_URI", re.IGNORECASE),
 ]
 
 sensitive_patterns = [
-    re.compile(r"SMTP_USER", re.IGNORECASE),
-    re.compile(r"MAIL_USER", re.IGNORECASE),
-    re.compile(r".*MAIL$", re.IGNORECASE),
-    re.compile(r".*CHAT_ID$", re.IGNORECASE),
+    re.compile(r"(SMTP|MAIL)_USER", re.IGNORECASE),
+    re.compile(r"MAIL$", re.IGNORECASE),
+    re.compile(r"CHAT_ID$", re.IGNORECASE),
 ]
 
 noise_patterns = [
@@ -52,6 +48,8 @@ def classify_env_key(key: str) -> Severity:
 
 
 def analyze_env_file(content: str):
+    lines = [line.strip() for line in content.splitlines() if line and "=" in line and not line.startswith("#")]
+
     result = []
 
     for line in content.splitlines():
