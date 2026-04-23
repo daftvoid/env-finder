@@ -1,7 +1,6 @@
 import re
 from enum import StrEnum
 
-
 critical_patterns = [
     re.compile(r"(API|KEY|SECRET|TOKEN)", re.IGNORECASE),
     re.compile(r"PASS(WORD)?$", re.IGNORECASE),
@@ -18,17 +17,11 @@ sensitive_patterns = [
 
 noise_patterns = [
     # re.compile(r"^VITE.*", re.IGNORECASE),
-    re.compile(r"^NODE", re.IGNORECASE),
-    re.compile(r"PORT$", re.IGNORECASE),
-    re.compile(r"HOST$", re.IGNORECASE),
-    re.compile(r"^\s*$")  # empty/whitespace-only strings
+    re.compile(r"^NODE.*", re.IGNORECASE),
+    re.compile(r".*PORT$", re.IGNORECASE),
+    re.compile(r".*HOST$", re.IGNORECASE),
+    re.compile(r" *", re.IGNORECASE)
 ]
-
-value_noise_patterns = [
-    re.compile(r"sample", re.IGNORECASE),
-    re.compile(r"your", re.IGNORECASE)
-]
-
 
 
 class Severity(StrEnum):
@@ -42,13 +35,13 @@ def classify_env_key(key: str) -> Severity:
     key = key.strip().upper()
 
     for pattern in critical_patterns:
-        if pattern.search(key):
+        if pattern.match(key):
             return Severity.CRITICAL
     for pattern in sensitive_patterns:
-        if pattern.search(key):
+        if pattern.match(key):
             return Severity.SENSITIVE
     for pattern in noise_patterns:
-        if pattern.search(key):
+        if pattern.match(key):
             return Severity.NOISE
 
     return Severity.UNKNOWN
@@ -59,8 +52,12 @@ def analyze_env_file(content: str):
 
     result = []
 
-    for line in lines:
+    for line in content.splitlines():
         line = line.strip()
+
+        if not line: continue
+        if line.startswith("#"): continue
+        if "=" not in line: continue
 
         k, v = line.split("=", 1)
 
@@ -68,14 +65,6 @@ def analyze_env_file(content: str):
         v = v.strip()
 
         if not v: continue
-
-        if any(noise_pattern.search(v) for noise_pattern in value_noise_patterns):
-            result.append({
-                "severity": Severity.NOISE,
-                "key": k,
-                "value": v
-            })
-            continue
 
         result.append({
             "severity": classify_env_key(k),
