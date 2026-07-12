@@ -5,7 +5,7 @@ import signal
 from threading import Thread
 
 from env_finder.github import get_files, search_repos, get_file_content
-from env_finder.util import log_stats, add_hits_entry, add_secrets_entry, add_stats_entry
+from env_finder.util import log_stats, add_hits_entry, add_secrets_entry, heartbeat
 from env_finder.logger import getLogger
 
 logger = getLogger(__name__)
@@ -15,11 +15,15 @@ REPO_BATCH_SIZE = 100
 
 class Scraper:
     def __init__(self):
-        self.repos_scraped = 0
-        self.secrets_count = 0
-        self.errors_count = 0
-        self.running = False
+        self.start_time_ms = None
+        self.start_time_ts = None
 
+        self.repos_scraped = 0
+        self.env_files_found = 0
+        # self.secrets_found = 0
+        self.errors_count = 0
+
+        self.running = False
         self.seen_repos = set()
 
         signal.signal(signal.SIGTERM, self.handle_stop_signals)
@@ -34,16 +38,21 @@ class Scraper:
     def stats_loop(self):
         while self.running:
             ts = time.time()
-            add_stats_entry({
-                "timestamp_ms": ts,
-                "repos_scraped": self.repos_scraped,
-                "secrets_count": self.secrets_count,
-                "errors_count": self.errors_count
-            })
+            heartbeat(
+                timestamp=ts,
+                up_since_epoch_ms=self.start_time_ms,
+                repos_scraped=self.repos_scraped,
+                env_files_found=self.env_files_found,
+                errors=self.errors_count
+            )
+            log_stats(self.repos_scraped, self.env_files_found, self.errors_count)
             time.sleep(8)
 
 
     def start(self):
+        self.start_time_ms = time.time()
+        self.start_time_ts = datetime.fromtimestamp(self.start_time_ms).strftime('%Y-%m-%d %H:%M:%S')
+
         self.running = True
         Thread(target=self.stats_loop).start()
 
@@ -65,21 +74,17 @@ class Scraper:
 
             repos = search_repos(query, per_page=1)  # only 1, because we don't care about the actual repos just yet
             if not repos:
-                logger.error("Error while searching for repos")
-                log_stats(self.repos_scraped, self.secrets_count, self.errors_count)
+                log_stats(self.repos_scraped, self.env_files_found, self.errors_count)
                 break
 
-            count = repos["total_count"]
-
-            logger.info(f"[GITHUB] Found {count} matching repositories...")
-
+            count = len(repos)
             # Split into chunks of 100 results each, because the Github API only allows up to 100 results per request
             for p in range(1, ceil(count/REPO_BATCH_SIZE) + 1):
                 if not self.running:
                     break
 
                 logger.info(f"[GITHUB] Loading Page {p}/{ceil(count/REPO_BATCH_SIZE)}")
-                repos = search_repos(query, p, REPO_BATCH_SIZE)["items"]
+                repos = search_repos(query, p, REPO_BATCH_SIZE)
 
                 for repo in repos:
                     if not self.running:
@@ -107,9 +112,7 @@ class Scraper:
                         time.sleep(5)
                         continue
 
-
-                    secrets = []
-
+                    env_files = []
                     for file in files:
                         path = file["path"]
 
@@ -118,25 +121,22 @@ class Scraper:
 
                         filename = path.rsplit("/", 1)[-1]
                         if filename.endswith(".env") and not any(i in filename for i in ["example", "template", ".xcode"]):   # .xcode.env
-                            secrets.append(file)
+                            env_files.append(file)
 
 
                     self.repos_scraped += 1
-                    self.secrets_count += len(secrets)
+                    self.env_files_found += len(env_files)
 
-                    if not secrets:
-                        logger.info(f"[{name}] No secrets found")
+                    if not env_files:
+                        logger.info(f"[{name}] No env files found")
                         continue
 
 
-                    add_hits_entry(repo_name=name, branch=branch, language=language, secrets=secrets)
-                    for sec in secrets:
+                    add_hits_entry(repo_name=name, branch=branch, language=language, secrets=env_files)
+                    for sec in env_files:
                         path = sec["path"]
-                        add_secrets_entry(repo_name=name, branch=branch, path=path, file_content=get_file_content(name, branch, path))
-
-
-            log_stats(self.repos_scraped, self.secrets_count, self.errors_count)
-
-
+                        file_content = get_file_content(name, branch, path)
+                        if file_content:
+                            add_secrets_entry(repo_name=name, branch=branch, path=path, file_content=file_content)
 
 
